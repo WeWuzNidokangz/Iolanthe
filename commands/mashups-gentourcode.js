@@ -1260,7 +1260,7 @@ exports.commands = {
 			params.timeToStart = bHasTeam ? 5 : 10;
 		}
 		if (null === params.autodq) {
-			params.autodq = bHasTeam ? 2 : 15;
+			params.autodq = bHasTeam ? 2 : 7;
 		}
 
 		// Construct tour code string
