@@ -290,7 +290,7 @@ var determineFormatGameTypeId = exports.determineFormatGameTypeId = function (fo
 
 //#region Gen
 
-var c_nCurrentGen = exports.c_nCurrentGen = 8;
+var c_nCurrentGen = exports.c_nCurrentGen = 9;
 
 var getGenName = exports.getGenName = function(nGen) {
 	return 'gen' + nGen.toString();
