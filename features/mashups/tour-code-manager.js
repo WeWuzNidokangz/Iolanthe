@@ -1063,14 +1063,16 @@ var resolveAlias = exports.resolveAlias = function (sSearch)
         sDynamicSearch = sSearch;
     }
 
-    var sDynamicSearch = sSearch;
     var bDynamicSearchSucceeded = false;
 
     const targetFormatIDArray = [];
 
+    //console.log('sGenPrefix: ' + sGenPrefix);
+    //console.log('sDynamicSearch: ' + sDynamicSearch);
+
     // Combined format dynamic aliasing
     for (const sCombKey of Object.keys(CombinedFormatIDAliasDict)) {
-        console.log(sCombKey);
+        //console.log(sCombKey);
 
         if (!sDynamicSearch.includes(sCombKey)) continue;
         if (targetFormatIDArray.includes(sCombKey)) continue;
