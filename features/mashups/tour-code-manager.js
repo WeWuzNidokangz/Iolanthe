@@ -829,7 +829,7 @@ var writeTourCodeCreatePRAsync = async function (
     const nNowTimestamp = Date.now();
     const dNow = new Date(nNowTimestamp);
 
-    const sRepo = `OTC`;
+    const sRepo = `OperationTourCode`; // Seems like it needs to use this instead of 'OTC' for now
     const sBaseBranchName = TEST_OCTOKIT_SIDE_BRANCH ? `reorganize-structure` : `master`;
     const sHeadBranchName = `${sUserId}-${sKey}-${nNowTimestamp}`;
     const sTourCodePath = `formats/${sKey}${TourExt}`;
@@ -853,6 +853,8 @@ TourCode: ${sTourCode}
 List: ${bIsExistingTour ? '(Unchanged)' : changedFilesDict[`metadata/list.txt`]}`);
         return;
     }
+
+    //console.log(`Trying to create PR at https://github.com/OperationTourCode/${sRepo}/`);
 
     octokit
     .createPullRequest({
