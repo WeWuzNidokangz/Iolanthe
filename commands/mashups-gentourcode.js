@@ -29,6 +29,13 @@ var bTierModified;
 var bTierIncreased;
 var bIsLC;
 
+var IsRuleIncluded = function(sRule, params)
+{
+	if (extractedRuleArray && extractedRuleArray.includes(sRule)) return true;
+	if (params.additionalRules && params.additionalRules.includes(sRule)) return true;
+	return false;
+}
+
 var TryAddRule = function(sCurrentRule, params, sourceFormat, bTierCheck)
 {
 	var bIgnoreRule = false;
@@ -1044,6 +1051,18 @@ exports.commands = {
 				});
 
 				nExtractedUnbanCount = extractedUnbanArray.length;
+			}
+
+			// Deal with Gen 9 NatDex problems
+			if ((9 === nBaseGen) && IsRuleIncluded('Standard NatDex', params)) {
+				const sMinSourceGenRule = 'Min Source Gen = 9';
+				if (IsRuleIncluded(sMinSourceGenRule, params)) {
+					extractedRuleArray?.pop('Min Source Gen = 9');
+				}
+				else if (baseFormatDetails.ruleset.includes(sMinSourceGenRule)) {
+					TryAddRule('!! Min Source Gen = 1', params, null, false);
+				}
+				TryAddUnban('Unreleased', params, null, false);
 			}
 
 			// Special cases
