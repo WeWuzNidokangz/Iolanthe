@@ -92,7 +92,8 @@ exports.commands = {
         const validFormatKey = TourCodeManager.replyToSearchValidDynamicFormatKey(this, arg);
         if(!validFormatKey) return;
 
-        this.reply('!code ' + TourCodeManager.searchTourCode(validFormatKey));
+        const sTourCode = TourCodeManager.searchTourCode(validFormatKey);
+        Mashups.replyInSplitCodeBlocks(this, sTourCode);
     },
     write: 'writetour',
     writetour: function (arg, user, room, cmd) {

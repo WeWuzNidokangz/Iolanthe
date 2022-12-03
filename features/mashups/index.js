@@ -70,6 +70,33 @@ var MASHUPS_DEBUG_ON = exports.MASHUPS_DEBUG_ON = false;
 
 //#endregion
 
+//#region Utility
+
+const c_nCodeBroadcastCharacterLimit = 8192;
+const c_nCodeBroadcastLeeway = 10;
+const c_nCodeBroadcastWarningCharacterCount = (c_nCodeBroadcastCharacterLimit - c_nCodeBroadcastLeeway);
+
+var replyInSplitCodeBlocks = exports.replyInSplitCodeBlocks = function (commandContext, sReplyContent) {
+	const nReplyContentCharCount = sReplyContent.length;
+	const nCodeBlocksNeeded = Math.ceil(nReplyContentCharCount / c_nCodeBroadcastWarningCharacterCount);
+	
+	if (nCodeBlocksNeeded > 1) { // Split !code outputs
+		let sSplitTourCode;
+		for(var nBlockItr=0; nBlockItr < nCodeBlocksNeeded; ++nBlockItr) {
+			sSplitTourCode = sReplyContent.substr(nBlockItr * c_nCodeBroadcastWarningCharacterCount, c_nCodeBroadcastWarningCharacterCount);
+			if (sSplitTourCode) commandContext.reply('!code ' + sSplitTourCode);
+		}
+
+		//commandContext.reply(`The output exceeded !code's ${c_nCodeBroadcastCharacterLimit.toString()} character limit, and had to be split into ${nCodeBlocksNeeded} blocks.`);
+	}
+	else { // Print out as single !code
+		const sStatement = '!code ' + sReplyContent;
+		if (sStatement) commandContext.reply(sStatement);
+	}
+}
+
+//#endregion
+
 //#region Tier
 
 var Tier = exports.Tier = {
