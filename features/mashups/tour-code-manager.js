@@ -740,7 +740,7 @@ var requestWriteTourCodeAsync = async function (
         return;
     }
 
-    const sSearchKey = params[0];
+    const sSearchKey = toId(params[0]);
     var sKey = searchValidDynamicFormatKey(sSearchKey);
     const bIsExistingTour = !!sKey;
     if (!bIsExistingTour) {
@@ -784,6 +784,9 @@ var requestWriteTourCodeAsync = async function (
         } else {
             delete AllTourCodesDictionary[sKey];
         }
+
+        bIsDoingRefresh = false;
+
         return;
     }
 
