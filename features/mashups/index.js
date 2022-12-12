@@ -317,7 +317,9 @@ var determineFormatGameTypeId = exports.determineFormatGameTypeId = function (fo
 
 //#region Gen
 
-var c_nCurrentGen = exports.c_nCurrentGen = 9;
+const c_nUndefinedGen = exports.c_nUndefinedGen = -1;
+
+const c_nCurrentGen = exports.c_nCurrentGen = 9;
 
 var getGenName = exports.getGenName = function(nGen) {
 	return 'gen' + nGen.toString();
@@ -353,27 +355,38 @@ var isLegalGen = exports.isLegalGen = function(nGen) {
 	return true;
 }
 
-var determineFormatGen = exports.determineFormatGen = function (formatDetails) {
-	if(!formatDetails || !formatDetails.name) {
-		if(MASHUPS_DEBUG_ON) monitor(`formatDetails undefined! May have been erroneously passed a format name.`);
-		return -1;
+var determineFormatIDGen = exports.determineFormatIDGen = function (sFormatID) {
+	if (!sFormatID) return c_nUndefinedGen;
+
+	sFormatID = toId(sFormatID);
+
+	const sStrippedName = sFormatID.replace('gen', '');
+	const nParsedGen = parseInt(sStrippedName, 10);
+	if (isLegalGen(nParsedGen)) {
+		return nParsedGen;
 	}
 
-	var sStrippedName;
-	var nParsedGen;
-	if(formatDetails.mod) { // Try to get gen definition by mod if possible (most reliable method as it's based on function)
-		sStrippedName = formatDetails.mod.replace('gen', '');
-		nParsedGen = parseInt( sStrippedName, 10 );
-		if(isLegalGen(nParsedGen) ) {
-			return nParsedGen;
+	return c_nUndefinedGen;
+}
+
+var determineFormatGen = exports.determineFormatGen = function (formatDetails) {
+	if (!formatDetails || !formatDetails.name) {
+		if(MASHUPS_DEBUG_ON) monitor(`formatDetails undefined! May have been erroneously passed a format name.`);
+		return c_nUndefinedGen;
+	}
+
+	if (formatDetails.mod) { // Try to get gen definition by mod if possible (most reliable method as it's based on function)
+		const nModGen = determineFormatIDGen(formatDetails.mod);
+		if (c_nUndefinedGen !== nModGen) {
+			return nModGen;
 		}
 	}
 
 	// Forced to try by name
-	sStrippedName = formatDetails.name.substring(0, 6);
+	var sStrippedName = formatDetails.name.substring(0, 6);
 	sStrippedName = sStrippedName.replace('[Gen ', '');
-	nParsedGen = parseInt( sStrippedName, 10 );
-	if(isLegalGen(nParsedGen) ) {
+	const nParsedGen = parseInt(sStrippedName, 10);
+	if (isLegalGen(nParsedGen)) {
 		return nParsedGen;
 	}
 

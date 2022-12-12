@@ -776,6 +776,17 @@ var requestWriteTourCodeAsync = async function (
     } else if (!dynamicFormatRaw.name || (TourNameMissingFallback === dynamicFormatRaw.name)) {
         bTCValid = false;
         commandContext.reply(`Tour code has no name!`);
+    } else if (!bIsExistingTour) {
+        const nTourIDGeneration = Mashups.determineFormatIDGen(sKey);
+        const nTourCodeGeneration = Mashups.determineFormatGen(dynamicFormatRaw.baseFormatDetails);
+
+        if (Mashups.c_nUndefinedGen === nTourIDGeneration) {
+            bTCValid = false;
+            commandContext.reply(`Tour key has invalid generation!`);
+        } else if (nTourIDGeneration !== nTourCodeGeneration) {
+            bTCValid = false;
+            commandContext.reply(`The generations of the tour key (${nTourIDGeneration}) and tour code (${nTourCodeGeneration}) do not match!`);
+        }
     }
 
     if (!bTCValid) {
