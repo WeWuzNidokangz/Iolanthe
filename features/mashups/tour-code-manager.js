@@ -732,10 +732,12 @@ var requestWriteTourCodeAsync = async function (
 {
     if (bIsDoingRefresh) return;
 
+    // Start locking out other updates until we complete
     bIsDoingRefresh = true;
 
     const params = arg.split('|');
     if (3 !== params.length) {
+        bIsDoingRefresh = false;
         commandContext.reply(`Usage: !code ?write [key]|[comment]|[tour code]`);
         return;
     }
@@ -749,16 +751,19 @@ var requestWriteTourCodeAsync = async function (
 
     const sComment = params[1].trim();
     if ('' === sComment) {
+        bIsDoingRefresh = false;
         commandContext.reply(`Comment cannot be empty!`);
         return;
     }
 
     const sTourCode = params[2];
     if ('' === sTourCode) {
+        bIsDoingRefresh = false;
         commandContext.reply(`Tour code cannot be empty!`);
         return;
     }
     if (!sTourCode.includes('\n')) {
+        bIsDoingRefresh = false;
         commandContext.reply(`Tour code was only one line! (Missing !code prefix?)`);
         return;
     }
