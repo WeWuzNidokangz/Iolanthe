@@ -1012,6 +1012,7 @@ const DirectFormatIDAliasDict = Object.freeze(sortByKeyLength({
     'cs':       ['categoryswap'],
     'doubles':  [],
     'flipped':  [],
+    'fp':       ['fullpotential'],
     'gg':       ['godlygift'],
     'inh':      ['inheritance'],
     'linked':   [],
