@@ -907,40 +907,64 @@ var nameCachedTourCodes = exports.nameCachedTourCodes = function ()
 {
     const currentGenPrefixRegex = new RegExp('^' + Mashups.getCurrentGenName());
 
-    var sOutput = 'Officials: ';
+    const currentGenOfficialsArray = [];
+    const currentGenOthersArray = [];
+    const oldGenOfficialsArray = [];
+    const oldGenOthersArray = [];
+
+    for (var nItr=0; nItr<AllTourCodesNamesArray.length; ++nItr) {
+        const sTourKey = AllTourCodesNamesArray[nItr];
+        const bIsCurrentGen = currentGenPrefixRegex.test(sTourKey);
+        const bIsOfficial = OfficialTourCodesNamesArray.includes(sTourKey);
+
+        if (bIsCurrentGen) {
+            if (bIsOfficial) {
+                currentGenOfficialsArray.push(sTourKey.replace(currentGenPrefixRegex, ''));
+            } else {
+                currentGenOthersArray.push(sTourKey.replace(currentGenPrefixRegex, ''));
+            }
+        } else {
+            if (bIsOfficial) {
+                oldGenOfficialsArray.push(sTourKey);
+            } else {
+                oldGenOthersArray.push(sTourKey);
+            }
+        }
+    }
+
+    var sOutput = '';
+    sOutput = concatTourCodeDisplayCategory(sOutput, 'Officials', currentGenOfficialsArray, true);
+    sOutput = concatTourCodeDisplayCategory(sOutput, 'Others', currentGenOthersArray, true);
+    sOutput = concatTourCodeDisplayCategory(sOutput, 'Old-gen Officials', oldGenOfficialsArray, true);
+    sOutput = concatTourCodeDisplayCategory(sOutput, 'Old-gen Others', oldGenOthersArray, true);
+    sOutput = concatTourCodeDisplayCategory(sOutput, 'Spotlight names', SpotlightNamesArray, false);
+
+    return sOutput;
+}
+
+var concatTourCodeDisplayCategory = function (
+    sOutput,
+    sHeader,
+    namesArray,
+    bPostfixLineBreak)
+{
+    if (sHeader) {
+        sOutput += `${sHeader}: `;
+    }
+
     var bFirstLoop = true;
-    for( var nItr=0; nItr<OfficialTourCodesNamesArray.length; ++nItr ) {
-        if(!(OfficialTourCodesNamesArray[nItr] in AllTourCodesDictionary)) continue;
-        if(!bFirstLoop) {
+    for (var nItr=0; nItr<namesArray.length; ++nItr) {
+        if (!bFirstLoop) {
             sOutput += ', ';
         }
-        sOutput += OfficialTourCodesNamesArray[nItr].replace(currentGenPrefixRegex, '');
+        sOutput += namesArray[nItr];
         bFirstLoop = false;
     }
 
-    sOutput += '\n\n';
-    sOutput += 'Others: ';
-    bFirstLoop = true;
-    for( var nItr=0; nItr<OtherTourCodesNamesArray.length; ++nItr ) {
-        if(!(OtherTourCodesNamesArray[nItr] in AllTourCodesDictionary)) continue;
-        if(!bFirstLoop) {
-            sOutput += ', ';
-        }
-        sOutput += OtherTourCodesNamesArray[nItr].replace(currentGenPrefixRegex, '');
-        bFirstLoop = false;
+    if (bPostfixLineBreak) {
+        sOutput += '\n\n';
     }
 
-    sOutput += '\n\n';
-    sOutput += 'Spotlight names: ';
-    bFirstLoop = true;
-    for( var nItr=0; nItr<SpotlightNamesArray.length; ++nItr ) {
-        if(!bFirstLoop) {
-            sOutput += ', ';
-        }
-        sOutput += SpotlightNamesArray[nItr];
-        bFirstLoop = false;
-    }
-    
     return sOutput;
 }
 
