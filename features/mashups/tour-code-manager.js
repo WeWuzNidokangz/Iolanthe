@@ -379,6 +379,8 @@ const INIT_FROM_CACHE = false;
 
 var initTourCodeCache = exports.initTourCodeCache = function (room)
 {
+    initAliasData();
+
     if(INIT_FROM_CACHE) {
         tourCodeCacheFirstPhaseInit();
         tourCodeCacheSecondPhaseInit(room);
@@ -905,7 +907,9 @@ List: ${bIsExistingTour ? '(Unchanged)' : changedFilesDict[`metadata/list.txt`]}
 
 var nameCachedTourCodes = exports.nameCachedTourCodes = function ()
 {
-    const currentGenPrefixRegex = new RegExp('^' + Mashups.getCurrentGenName());
+    const currentGenPrefixRegex = new RegExp(`^${Mashups.getCurrentGenName()}`);
+    const genPrefixRegex = new RegExp(`^gen([1-9]|[1-9][0-9])`);
+    const displayOverrideInputArray = Object.keys(DisplayOverrideFormatIDDict);
 
     const currentGenOfficialsArray = [];
     const currentGenOthersArray = [];
@@ -914,22 +918,36 @@ var nameCachedTourCodes = exports.nameCachedTourCodes = function ()
 
     for (var nItr=0; nItr<AllTourCodesNamesArray.length; ++nItr) {
         const sTourKey = AllTourCodesNamesArray[nItr];
+        const sGenStrippedTourKey = sTourKey.replace(genPrefixRegex, '');
         const bIsCurrentGen = currentGenPrefixRegex.test(sTourKey);
         const bIsOfficial = OfficialTourCodesNamesArray.includes(sTourKey);
 
+        var sDisplayContent = sTourKey;
+        if (bIsCurrentGen) { // When displaying, strip gen from current-gen keys
+            sDisplayContent = sDisplayContent.replace(currentGenPrefixRegex, '');
+        }
+        if (displayOverrideInputArray.includes(sGenStrippedTourKey)) { // Use common aliases if they are exact matches
+            for (const sDisplayOverrideInput of displayOverrideInputArray) {
+                sDisplayContent = sDisplayContent.replace(sDisplayOverrideInput, DisplayOverrideFormatIDDict[sDisplayOverrideInput]);
+            }
+        }
+
         if (bIsCurrentGen) {
             if (bIsOfficial) {
-                currentGenOfficialsArray.push(sTourKey.replace(currentGenPrefixRegex, ''));
+                currentGenOfficialsArray.push(sDisplayContent);
             } else {
-                currentGenOthersArray.push(sTourKey.replace(currentGenPrefixRegex, ''));
+                currentGenOthersArray.push(sDisplayContent);
             }
         } else {
             if (bIsOfficial) {
-                oldGenOfficialsArray.push(sTourKey);
+                oldGenOfficialsArray.push(sDisplayContent);
             } else {
-                oldGenOthersArray.push(sTourKey);
+                oldGenOthersArray.push(sDisplayContent);
             }
         }
+
+        // Sanity check that displayed strings actually alias properly
+        //console.assert(!!searchValidDynamicFormatKey(sDisplayContent), `${sDisplayContent} failed as a look-up (sTourKey: ${sTourKey})`);
     }
 
     var sOutput = '';
@@ -1069,13 +1087,29 @@ const DirectFormatIDAliasDict = Object.freeze(sortByKeyLength({
 }));
 
 const CombinedFormatIDAliasDict = Object.freeze(sortByKeyLength({
-    'caaamo':       ['aaa', 'camo'],
-    'caaamomons':   ['aaa', 'camo'],
-    'snm':          ['mnm', 'stab'],
+    'caaamo':       ['camo', 'aaa'],
+    'caaamomons':   ['camo', 'aaa'],
+    'snm':          ['stab', 'mnm'],
     'stabnmega':    ['mnm', 'stab'],
-    'staaab':       ['aaa', 'stab'],
-    'staaabmons':   ['aaa', 'stab'],
+    'staaab':       ['stab', 'aaa'],
+    'staaabmons':   ['stab', 'aaa'],
 }));
+
+var DisplayOverrideFormatIDDict = {};
+
+var initAliasData = function () {
+    // Allow reverse searching from the shortest combined ID to prefered alias
+    for (const sCombKey of Object.keys(CombinedFormatIDAliasDict)) {
+        const sJoinedIDArray = CombinedFormatIDAliasDict[sCombKey].join('');
+        if (DisplayOverrideFormatIDDict.hasOwnProperty(sJoinedIDArray) &&
+            (sCombKey.length > DisplayOverrideFormatIDDict[sJoinedIDArray].length)) continue;
+
+        DisplayOverrideFormatIDDict[sJoinedIDArray] = sCombKey;
+    }
+
+    //console.log(CombinedFormatIDAliasDict);
+    //console.log(DisplayOverrideFormatIDDict);
+}
 
 var resolveAlias = exports.resolveAlias = function (sSearch)
 {
