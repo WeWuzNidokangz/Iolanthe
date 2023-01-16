@@ -222,7 +222,7 @@ exports.commands = {
         var splitArray, timeSplitArray, sTimeSlot, sDay, dHour, dTime, nDay, sFormatGroup;
         for(let sDayContent of rawContentPerDayArray) {
             sDayContent = sDayContent.replace(/ +(?= )/g,''); // Ensure the line of text is single-spaced
-            //console.log(sDayContent);
+            console.log(sDayContent);
             splitArray = sDayContent.split(':');
             sTimeSlot = splitArray[0];
             if(splitArray.length > 1) {
@@ -232,7 +232,7 @@ exports.commands = {
                 }
                 else {
                     for(let name of TourCodeManager.SpotlightNamesArray) {
-                        //console.log(name);
+                        console.log(name);
                         if(toId(sFormatGroup) !== toId(name)) continue;
                         sFormatGroup = `Free (would be ${name} if it wasn't spotlight)`;
                         break;
@@ -245,7 +245,9 @@ exports.commands = {
             timeSplitArray = sDayContent.split(',');
             sDay = timeSplitArray[0].trim();
             if(timeSplitArray.length > 1) {
+                console.log("time Hour: " + timeSplitArray[1]);
                 dHour = TourCodeManager.parseTime(timeSplitArray[1]);
+                console.log("dHour: " + dHour);
             }
             else {
                 dHour = new Date();
