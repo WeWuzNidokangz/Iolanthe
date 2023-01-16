@@ -244,28 +244,44 @@ exports.commands = {
             }
             timeSplitArray = sDayContent.split(',');
             sDay = timeSplitArray[0].trim();
+            var nInitialHours = 0;
             if(timeSplitArray.length > 1) {
                 console.log("time Hour: " + timeSplitArray[1]);
                 dHour = TourCodeManager.parseTime(timeSplitArray[1]);
+                nInitialHours = TourCodeManager.parseHours(timeSplitArray[1]);
                 console.log("dHour: " + dHour);
             }
             else {
                 dHour = new Date();
             }
 
+            var comparisonData = new Date();
+
+            var nUTCHour = dHour.getUTCHours();
+            var nDay = TourCodeManager.parseDay(sDay);
+            if (nInitialHours > 24) {
+                nDay += 1;
+            }
+            console.log("nUTCHour: " + nUTCHour);
+            console.log("nDay: " + nDay);
+
             dayDictionary[sDay] = {
-                hour: dHour.getUTCHours(),
-                day: TourCodeManager.parseDay(sDay),
+                hour: nUTCHour,
+                day: nDay,
                 formatgroup: sFormatGroup
             };
         }
 
+        console.log(dayDictionary);
+
         var sOutput = '';
 
-        var dNow = TourCodeManager.convertDateToUTC(new Date(Date.now()));
+        var dNow = new Date(Date.now());
         // Test
-        //dNow = TourCodeManager.convertDateToUTC(new Date(Date.now() + (1000*60*60*(4+4*24))));
+        //dNow = new Date(Date.now() + (1000*60*60*(69+0*24)));
         var nCurrentDay = dNow.getUTCDay();
+        console.log("dNow: " + dNow);
+        console.log("nCurrentDay: " + nCurrentDay);
         
         var sSoonestDailyKey = null, nSoonestDailyDeltaTime;
         var dTestDate, nDeltaDays, nDeltaTime;
@@ -290,9 +306,13 @@ exports.commands = {
             var nMinutes = Math.floor(nSeconds/60);
             var nHours = Math.floor(nMinutes/60);
             var nDays = Math.floor(nHours/24);
+            console.log("nSeconds: " + nSeconds);
+            console.log("nMinutes: " + nMinutes);
+            console.log("nHours: " + nHours);
+            console.log("nDays: " + nDays);
 
-            nHours = nHours-(nDays*24);
-            nMinutes = nMinutes-(nDays*24*60)-(nHours*60);
+            //nHours = nHours-(nDays*24);
+            nMinutes = nMinutes/*-(nDays*24*60)*/-(nHours*60);
 
             sOutput += `!code Next daily: ${dayDictionary[sSoonestDailyKey].formatgroup} in `;
             if(nHours > 0) {

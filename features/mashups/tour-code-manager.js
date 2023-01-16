@@ -1276,6 +1276,22 @@ var searchTourCodeURL = exports.searchTourCodeURL = function(sSearch)
     return TourCodeURLsDictionary[sSearch];
 }
 
+var parseHours = exports.parseHours = function (timeString) {	
+	if (timeString == '') return null;
+	
+	var time = timeString.match(/(\d+)(:(\d\d))?\s*(p?)/i);
+	if (time == null) return null;
+	
+	var hours = parseInt(time[1],10);
+	if (hours == 12 && !time[4]) {
+		hours = 0;
+	}
+	else { // Need to support hours outside UMT day span (>12PM)
+		hours += (time[4])? 12 : 0;
+	}
+	return hours;
+}
+
 var parseTime = exports.parseTime = function (timeString) {	
 	if (timeString == '') return null;
 	
@@ -1292,7 +1308,7 @@ var parseTime = exports.parseTime = function (timeString) {
     console.log("time[4]: " + time[4]);
     console.log("hours: " + hours);
 	var d = new Date();
-	d.setHours(hours);
+	d.setUTCHours(hours);
 	d.setMinutes(parseInt(time[3],10) || 0);
 	d.setSeconds(0, 0);
 	return d;
