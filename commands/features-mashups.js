@@ -300,7 +300,7 @@ exports.commands = {
                 //console.log(timeReference);
                 const sCycleKey = `${sDayKey} ${nCycleItr}`;
                 cycleDictionary[sCycleKey] = {
-                    day: TourCodeManager.parseDay(sDayKey) + timeReference.dayOffset + (7*nCycleItr) + ('Sunday' === sDayKey ? 7 : -1),
+                    day: (TourCodeManager.parseDay(sDayKey) + ('Sunday' === sDayKey ? 6 : -1)) + timeReference.dayOffset + (7*nCycleItr) + 1,
                     hour: timeReference.hour,
                     formatgroup: dayDictionary[sDayKey].formatgroup
                 };
