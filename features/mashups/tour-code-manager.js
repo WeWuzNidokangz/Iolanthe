@@ -1305,8 +1305,8 @@ var parseTime = exports.parseTime = function (timeString) {
 	else { // Need to support hours outside UMT day span (>12PM)
 		hours += (time[4])? 12 : 0;
 	}
-    console.log("time[4]: " + time[4]);
-    console.log("hours: " + hours);
+    //console.log("time[4]: " + time[4]);
+    //console.log("hours: " + hours);
 	var d = new Date();
 	d.setUTCHours(hours);
 	d.setMinutes(parseInt(time[3],10) || 0);
@@ -1328,6 +1328,10 @@ var parseDay = exports.parseDay = function (sDayString) {
         case 'Saturday': nDay = 6; break;
     }
     return nDay;
+}
+
+var dateDiff = exports.dateDiff = function (dFirst, dSecond) {        
+    return Math.round((dSecond - dFirst) / (1000 * 60 * 60 * 24));
 }
 
 var addDays = exports.addDays = function (dDate, nDeltaDays) {

@@ -219,20 +219,32 @@ exports.commands = {
         var sDailyRawContent = TourCodeManager.DailyRawContent;
         var rawContentPerDayArray = sDailyRawContent.split('\n');
         var dayDictionary = {};
+        var dayReferenceArray = [];
+        var nDayReferenceIdx = 0;
         var splitArray, timeSplitArray, sTimeSlot, sDay, dHour, dTime, nDay, sFormatGroup;
-        for(let sDayContent of rawContentPerDayArray) {
+        var spotlightStartDate = null;
+        for (let sDayContent of rawContentPerDayArray) {
             sDayContent = sDayContent.replace(/ +(?= )/g,''); // Ensure the line of text is single-spaced
-            console.log(sDayContent);
+            //console.log(sDayContent);
             splitArray = sDayContent.split(':');
             sTimeSlot = splitArray[0];
-            if(splitArray.length > 1) {
+
+            // Spotlight start special case
+            if ('Spotlight Start' === sTimeSlot) {
+                if (splitArray.length < 2) continue;
+
+                spotlightStartDate = new Date(splitArray[1].trim());
+                continue;
+            }
+
+            if (splitArray.length > 1) {
                 sFormatGroup = splitArray[1].trim();
                 if('spotlight' === toId(sFormatGroup)) {
                     sFormatGroup = `Spotlight (${TourCodeManager.SpotlightNamesArray[0]})`;
                 }
                 else {
-                    for(let name of TourCodeManager.SpotlightNamesArray) {
-                        console.log(name);
+                    for(const name of TourCodeManager.SpotlightNamesArray) {
+                        //console.log(name);
                         if(toId(sFormatGroup) !== toId(name)) continue;
                         sFormatGroup = `Free (would be ${name} if it wasn't spotlight)`;
                         break;
@@ -245,47 +257,86 @@ exports.commands = {
             timeSplitArray = sDayContent.split(',');
             sDay = timeSplitArray[0].trim();
             var nInitialHours = 0;
-            if(timeSplitArray.length > 1) {
-                console.log("time Hour: " + timeSplitArray[1]);
+            if (timeSplitArray.length > 1) {
+                //console.log("time Hour: " + timeSplitArray[1]);
                 dHour = TourCodeManager.parseTime(timeSplitArray[1]);
                 nInitialHours = TourCodeManager.parseHours(timeSplitArray[1]);
-                console.log("dHour: " + dHour);
+                //console.log("dHour: " + dHour);
             }
             else {
                 dHour = new Date();
             }
 
-            var comparisonData = new Date();
-
             var nUTCHour = dHour.getUTCHours();
-            var nDay = TourCodeManager.parseDay(sDay);
-            if (nInitialHours > 24) {
-                nDay += 1;
-            }
-            console.log("nUTCHour: " + nUTCHour);
-            console.log("nDay: " + nDay);
+            var nDayOffset = (nInitialHours > 24) ? 1 : 0;
+            var nDay = TourCodeManager.parseDay(sDay) + nDayOffset;
+            //console.log("nUTCHour: " + nUTCHour);
+            //console.log("nDay: " + nDay);
 
             dayDictionary[sDay] = {
-                hour: nUTCHour,
                 day: nDay,
+                dayOffset: nDayOffset,
+                hour: nUTCHour,
                 formatgroup: sFormatGroup
             };
+
+            dayReferenceArray[nDayReferenceIdx] = dayDictionary[sDay];
+            nDayReferenceIdx++;
         }
 
-        console.log(dayDictionary);
+        //console.log("dayDictionary:");
+        //console.log(dayDictionary);
 
-        var sOutput = '';
+        var cycleDictionary = {};
+        nDayReferenceIdx = 0;
+        var nOffsetDayReferenceIdx = 0;
+        for (var nCycleItr=0; nCycleItr<4; ++nCycleItr) {
+            for (const sDayKey in dayDictionary) {
+                nOffsetDayReferenceIdx = nDayReferenceIdx + nCycleItr;
+                if (nOffsetDayReferenceIdx >= 7) {
+                    nOffsetDayReferenceIdx -= 7;
+                }
+                const timeReference = dayReferenceArray[nOffsetDayReferenceIdx];
+                //console.log(timeReference);
+                const sCycleKey = `${sDayKey} ${nCycleItr}`;
+                cycleDictionary[sCycleKey] = {
+                    day: TourCodeManager.parseDay(sDayKey) + timeReference.dayOffset + (7*nCycleItr) + ('Sunday' === sDayKey ? 7 : -1),
+                    hour: timeReference.hour,
+                    formatgroup: dayDictionary[sDayKey].formatgroup
+                };
+
+                nDayReferenceIdx++;
+            }
+            nDayReferenceIdx = 0;
+        }
+
+        //console.log("cycleDictionary:");
+        //console.log(cycleDictionary);
+
+        // Ensure there is a spotlight start fallback
+        if (!spotlightStartDate) {
+            spotlightStartDate = new Date(Date.now());
+        }
+        //console.log(spotlightStartDate);
+
+        var sOutput = '!code ';
 
         var dNow = new Date(Date.now());
         // Test
-        //dNow = new Date(Date.now() + (1000*60*60*(69+0*24)));
+        //dNow = new Date(Date.now() + (1000*60*60*(7+0*24)));
         var nCurrentDay = dNow.getUTCDay();
         console.log("dNow: " + dNow);
-        console.log("nCurrentDay: " + nCurrentDay);
-        
+        //console.log("nCurrentDay: " + nCurrentDay);
+
+        //const nDaysSinceStartOfSpotlight = TourCodeManager.dateDiff(spotlightStartDate, dNow);
+        //console.log("nDaysSinceStartOfSpotlight: " + nDaysSinceStartOfSpotlight);
+
+        const nTimeSinceStartOfSpotlight = dNow - spotlightStartDate;
+        console.log("nTimeSinceStartOfSpotlight: " + nTimeSinceStartOfSpotlight);
+
         var sSoonestDailyKey = null, nSoonestDailyDeltaTime;
         var dTestDate, nDeltaDays, nDeltaTime;
-        for (let key in dayDictionary) {
+        /*for (let key in dayDictionary) {
             nDeltaDays = (dayDictionary[key].day < nCurrentDay) ? (7 - nCurrentDay) + dayDictionary[key].day : dayDictionary[key].day - nCurrentDay;
             dTestDate = TourCodeManager.addDays(dNow, nDeltaDays);
             dTestDate.setUTCHours(dayDictionary[key].hour);
@@ -296,12 +347,32 @@ exports.commands = {
             let bIsDeltaTimePositive = (nDeltaTime > 0);
             if (!bIsDeltaTimePositive) continue;
 
-            if(!sSoonestDailyKey || (nSoonestDailyDeltaTime > nDeltaTime)) {
+            if (!sSoonestDailyKey || (nSoonestDailyDeltaTime > nDeltaTime)) {
                 sSoonestDailyKey = key;
                 nSoonestDailyDeltaTime = nDeltaTime;
             }
+        }*/
+        for (let key in cycleDictionary) {
+            dTestDate = TourCodeManager.addDays(spotlightStartDate, cycleDictionary[key].day);
+            dTestDate.setUTCHours(cycleDictionary[key].hour);
+            dTestDate.setUTCMinutes(0);
+            dTestDate.setUTCSeconds(0);
+            nDeltaTime = dTestDate - dNow;
+
+            let bIsDeltaTimePositive = (nDeltaTime > 0);
+            if (!bIsDeltaTimePositive) continue;
+
+            if (!sSoonestDailyKey || (nSoonestDailyDeltaTime > nDeltaTime)) {
+                sSoonestDailyKey = key;
+                nSoonestDailyDeltaTime = nDeltaTime;
+
+                console.log("Test sSoonestDailyKey: " + sSoonestDailyKey);
+                console.log("Test nSoonestDailyDeltaTime: " + nSoonestDailyDeltaTime);
+            }
         }
-        if(sSoonestDailyKey) {
+
+        if (sSoonestDailyKey) {
+            console.log("sSoonestDailyKey: " + sSoonestDailyKey);
             var nSeconds = Math.floor(nSoonestDailyDeltaTime/1000);
             var nMinutes = Math.floor(nSeconds/60);
             var nHours = Math.floor(nMinutes/60);
@@ -314,7 +385,7 @@ exports.commands = {
             //nHours = nHours-(nDays*24);
             nMinutes = nMinutes/*-(nDays*24*60)*/-(nHours*60);
 
-            sOutput += `!code Next daily: ${dayDictionary[sSoonestDailyKey].formatgroup} in `;
+            sOutput += `Next daily: ${cycleDictionary[sSoonestDailyKey].formatgroup} in `;
             if(nHours > 0) {
                 sOutput += `${nHours} hours, `;
             }
@@ -324,7 +395,7 @@ exports.commands = {
         sOutput += '\n\nThis is the OM Mashups daily tour schedule:-\n';
         //sOutput += '<br><div class="infobox">';
         var bFirstLoop = true;
-        for (let key in dayDictionary) {
+        for (const key in dayDictionary) {
             //console.log(key + ' is ' + dayDictionary[key]);
             if(!bFirstLoop) {
                 sOutput += '\n';
