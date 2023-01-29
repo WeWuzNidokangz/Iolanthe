@@ -76,6 +76,9 @@ const TourInlineNameSeparator = ',,,';
 
 const GenericResourcesLink = exports.GenericResourcesLink = 'https://www.smogon.com/forums/threads/om-mashup-megathread.3657159/#post-8299984';
 const MashupsGeneratedFormatsColumn = 1;
+const DailyNotificationCheckFrequencyMinutes = 10;
+// - 1000 to ensure check frequency is smaller than minimum display frequency
+const DailyNotificationCheckFrequencyMilliseconds = (1000 * 60 * DailyNotificationCheckFrequencyMinutes) - 1000;
 
 var OfficialTourCodesNamesArray = exports.OfficialTourCodesNamesArray = [];
 var OtherTourCodesNamesArray = exports.OtherTourCodesNamesArray = [];
@@ -94,6 +97,7 @@ var DailyRawContent = exports.DailyRawContent = 'Uninit';
 var DailyDayDictionary = exports.DailyDayDictionary = {};
 var DailyCycleDictionary = exports.DailyCycleDictionary = {};
 var SpotlightStartDate = exports.SpotlightStartDate = null;
+var DailyCheckIntervalID = -1;
 
 //#region Dictionary Utils
 
@@ -667,6 +671,25 @@ var tourCodeCacheSecondPhaseInit = function(room)
     exports.DailyCycleDictionary = DailyCycleDictionary;
     exports.SpotlightStartDate = SpotlightStartDate;
 
+    // Restart daily notification interval
+    clearInterval(DailyCheckIntervalID);
+
+    DailyCheckIntervalID = setInterval(DailyNotificationCallback, DailyNotificationCheckFrequencyMilliseconds);
+
+    function DailyNotificationCallback()
+    {
+        var upcomingDailyData = calcUpcomingDailyData();
+        if (!upcomingDailyData) return;
+
+        if (upcomingDailyData.hoursLeft > 0) return;
+        if (upcomingDailyData.minutesLeft > DailyNotificationCheckFrequencyMinutes) return;
+
+        //console.log(CommandParser.cachedRoom);
+
+        if (!CommandParser.cachedRoom) return;
+        Bot.say(CommandParser.cachedRoom, `Scheduled daily: ${DailyCycleDictionary[upcomingDailyData.soonestDailyKey].formatgroup} upcoming in ${upcomingDailyData.minutesLeft} minutes...`);
+    }
+
     // Output result
     if (room) {
         var sNames = nameCachedTourCodes();
@@ -701,6 +724,8 @@ var bIsDoingRefresh = false;
 var refreshTourCodeCache = exports.refreshTourCodeCache = async function (room)
 {
     if(bIsDoingRefresh) return;
+
+    clearInterval(DailyCheckIntervalID);
 
     bIsDoingRefresh = true;
 

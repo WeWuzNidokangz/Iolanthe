@@ -314,6 +314,11 @@ var Client = (function () {
 	};
 
 	Client.prototype.sendRoom = function (room, data, delay) {
+		if (room) { // 23/01/29: Cache most recent room
+			CommandParser.cachedRoom = room;
+			//console.log("cachedRoom: " + CommandParser.cachedRoom);
+		}
+
 		if (!(data instanceof Array)) {
 			data = [data.toString()];
 		}

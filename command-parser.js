@@ -11,6 +11,7 @@ const HELP_TIME_INTERVAL = 2 * 60 * 1000;
 var commands = exports.commands = {};
 var dynCommands = exports.dynCommands = {};
 var tempVar = exports.tempVar = '';
+var cachedRoom = exports.cachedRoom = 'ommashups';
 
 /* Resource Monitor */
 
