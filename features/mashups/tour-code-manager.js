@@ -91,6 +91,9 @@ var DynamicFormatsRawDictionary = {};
 var SpotlightNamesArray = exports.SpotlightNamesArray = [];
 
 var DailyRawContent = exports.DailyRawContent = 'Uninit';
+var DailyDayDictionary = exports.DailyDayDictionary = {};
+var DailyCycleDictionary = exports.DailyCycleDictionary = {};
+var SpotlightStartDate = exports.SpotlightStartDate = null;
 
 //#region Dictionary Utils
 
@@ -554,6 +557,115 @@ var tourCodeCacheSecondPhaseInit = function(room)
     for (const [sKey, value] of Object.entries(AllTourCodesDictionary)) {
         DynamicFormatsRawDictionary[sKey] = generateDynamicFormatRaw(sKey);
     }
+
+    // Rebuild daily content cached data
+    DailyDayDictionary = {};
+    SpotlightStartDate = null;
+
+    var sDailyRawContent = DailyRawContent;
+    var rawContentPerDayArray = sDailyRawContent.split('\n');
+    var dayReferenceArray = [];
+    var nDayReferenceIdx = 0;
+    var splitArray, timeSplitArray, sTimeSlot, sDay, dHour, dTime, nDay, sFormatGroup;
+    for (let sDayContent of rawContentPerDayArray) {
+        sDayContent = sDayContent.replace(/ +(?= )/g,''); // Ensure the line of text is single-spaced
+        //console.log(sDayContent);
+        splitArray = sDayContent.split(':');
+        sTimeSlot = splitArray[0];
+
+        // Spotlight start special case
+        if ('Spotlight Start' === sTimeSlot) {
+            if (splitArray.length < 2) continue;
+
+            SpotlightStartDate = new Date(splitArray[1].trim());
+            continue;
+        }
+
+        if (splitArray.length > 1) {
+            sFormatGroup = splitArray[1].trim();
+            if('spotlight' === toId(sFormatGroup)) {
+                sFormatGroup = `Spotlight (${SpotlightNamesArray[0]})`;
+            }
+            else {
+                for(const name of SpotlightNamesArray) {
+                    //console.log(name);
+                    if(toId(sFormatGroup) !== toId(name)) continue;
+                    sFormatGroup = `Free (would be ${name} if it wasn't spotlight)`;
+                    break;
+                }
+            }
+        }
+        else {
+            sFormatGroup = '';
+        }
+        timeSplitArray = sDayContent.split(',');
+        sDay = timeSplitArray[0].trim();
+        var nInitialHours = 0;
+        if (timeSplitArray.length > 1) {
+            //console.log("time Hour: " + timeSplitArray[1]);
+            dHour = parseTime(timeSplitArray[1]);
+            nInitialHours = parseHours(timeSplitArray[1]);
+            //console.log("dHour: " + dHour);
+        }
+        else {
+            dHour = new Date();
+        }
+
+        var nUTCHour = dHour.getUTCHours();
+        var nDayOffset = (nInitialHours > 24) ? 1 : 0;
+        var nDay = parseDay(sDay) + nDayOffset;
+        //console.log("nUTCHour: " + nUTCHour);
+        //console.log("nDay: " + nDay);
+
+        DailyDayDictionary[sDay] = {
+            day: nDay,
+            dayOffset: nDayOffset,
+            hour: nUTCHour,
+            formatgroup: sFormatGroup
+        };
+
+        dayReferenceArray[nDayReferenceIdx] = DailyDayDictionary[sDay];
+        nDayReferenceIdx++;
+    }
+
+    //console.log("DailyDayDictionary:");
+    //console.log(DailyDayDictionary);
+
+    DailyCycleDictionary = {};
+    nDayReferenceIdx = 0;
+    var nOffsetDayReferenceIdx = 0;
+    for (var nCycleItr=0; nCycleItr<4; ++nCycleItr) {
+        for (const sDayKey in DailyDayDictionary) {
+            nOffsetDayReferenceIdx = nDayReferenceIdx + nCycleItr;
+            if (nOffsetDayReferenceIdx >= 7) {
+                nOffsetDayReferenceIdx -= 7;
+            }
+            const timeReference = dayReferenceArray[nOffsetDayReferenceIdx];
+            //console.log(timeReference);
+            const sCycleKey = `${sDayKey} ${nCycleItr}`;
+            DailyCycleDictionary[sCycleKey] = {
+                day: (parseDay(sDayKey) + ('Sunday' === sDayKey ? 6 : -1)) + timeReference.dayOffset + (7*nCycleItr) + 1,
+                hour: timeReference.hour,
+                formatgroup: DailyDayDictionary[sDayKey].formatgroup
+            };
+
+            nDayReferenceIdx++;
+        }
+        nDayReferenceIdx = 0;
+    }
+
+    //console.log("DailyCycleDictionary:");
+    //console.log(DailyCycleDictionary);
+
+    // Ensure there is a spotlight start fallback
+    if (!SpotlightStartDate) {
+        SpotlightStartDate = new Date(Date.now());
+    }
+    //console.log(SpotlightStartDate);
+
+    exports.DailyDayDictionary = DailyDayDictionary;
+    exports.DailyCycleDictionary = DailyCycleDictionary;
+    exports.SpotlightStartDate = SpotlightStartDate;
 
     // Output result
     if (room) {
@@ -1274,80 +1386,6 @@ var searchTourCodeURL = exports.searchTourCodeURL = function(sSearch)
 
     if (!TourCodeURLsDictionary.hasOwnProperty(sSearch)) return null;
     return TourCodeURLsDictionary[sSearch];
-}
-
-var parseHours = exports.parseHours = function (timeString) {	
-	if (timeString == '') return null;
-	
-	var time = timeString.match(/(\d+)(:(\d\d))?\s*(p?)/i);
-	if (time == null) return null;
-	
-	var hours = parseInt(time[1],10);
-	if (hours == 12 && !time[4]) {
-		hours = 0;
-	}
-	else { // Need to support hours outside UMT day span (>12PM)
-		hours += (time[4])? 12 : 0;
-	}
-	return hours;
-}
-
-var parseTime = exports.parseTime = function (timeString) {	
-	if (timeString == '') return null;
-	
-	var time = timeString.match(/(\d+)(:(\d\d))?\s*(p?)/i);
-	if (time == null) return null;
-	
-	var hours = parseInt(time[1],10);
-	if (hours == 12 && !time[4]) {
-		hours = 0;
-	}
-	else { // Need to support hours outside UMT day span (>12PM)
-		hours += (time[4])? 12 : 0;
-	}
-    //console.log("time[4]: " + time[4]);
-    //console.log("hours: " + hours);
-	var d = new Date();
-	d.setUTCHours(hours);
-	d.setMinutes(parseInt(time[3],10) || 0);
-	d.setSeconds(0, 0);
-	return d;
-}
-
-var parseDay = exports.parseDay = function (sDayString) {
-	if (sDayString == '') return -1;
-    
-    var nDay = -1;
-    switch(sDayString) {
-        case 'Sunday': nDay = 0; break;
-        case 'Monday': nDay = 1; break;
-        case 'Tuesday': nDay = 2; break;
-        case 'Wednesday': nDay = 3; break;
-        case 'Thursday': nDay = 4; break;
-        case 'Friday': nDay = 5; break;
-        case 'Saturday': nDay = 6; break;
-    }
-    return nDay;
-}
-
-var dateDiff = exports.dateDiff = function (dFirst, dSecond) {        
-    return Math.round((dSecond - dFirst) / (1000 * 60 * 60 * 24));
-}
-
-var addDays = exports.addDays = function (dDate, nDeltaDays) {
-    var result = new Date(dDate);
-    result.setDate(result.getDate() + nDeltaDays);
-    return result;
-}
-
-var convertDateToUTC = exports.convertDateToUTC = function (dDate) {
-    return new Date(
-        dDate.getUTCFullYear(),
-        dDate.getUTCMonth(),
-        dDate.getUTCDate(),
-        dDate.getUTCHours(),
-        dDate.getUTCMinutes(),
-        dDate.getUTCSeconds());
 }
 
 //#region generateMashupFormats
@@ -2183,4 +2221,156 @@ var generateMashupFormats = exports.generateMashupFormats = function () {
 
     return true;
 }
+
 //#endregion generateMashupFormats
+
+//#region Daily Content
+
+var parseHours = exports.parseHours = function (timeString) {	
+	if (timeString == '') return null;
+	
+	var time = timeString.match(/(\d+)(:(\d\d))?\s*(p?)/i);
+	if (time == null) return null;
+	
+	var hours = parseInt(time[1],10);
+	if (hours == 12 && !time[4]) {
+		hours = 0;
+	}
+	else { // Need to support hours outside UMT day span (>12PM)
+		hours += (time[4])? 12 : 0;
+	}
+	return hours;
+}
+
+var parseTime = exports.parseTime = function (timeString) {	
+	if (timeString == '') return null;
+	
+	var time = timeString.match(/(\d+)(:(\d\d))?\s*(p?)/i);
+	if (time == null) return null;
+	
+	var hours = parseInt(time[1],10);
+	if (hours == 12 && !time[4]) {
+		hours = 0;
+	}
+	else { // Need to support hours outside UMT day span (>12PM)
+		hours += (time[4])? 12 : 0;
+	}
+    //console.log("time[4]: " + time[4]);
+    //console.log("hours: " + hours);
+	var d = new Date();
+	d.setUTCHours(hours);
+	d.setMinutes(parseInt(time[3],10) || 0);
+	d.setSeconds(0, 0);
+	return d;
+}
+
+var parseDay = exports.parseDay = function (sDayString) {
+	if (sDayString == '') return -1;
+    
+    var nDay = -1;
+    switch(sDayString) {
+        case 'Sunday': nDay = 0; break;
+        case 'Monday': nDay = 1; break;
+        case 'Tuesday': nDay = 2; break;
+        case 'Wednesday': nDay = 3; break;
+        case 'Thursday': nDay = 4; break;
+        case 'Friday': nDay = 5; break;
+        case 'Saturday': nDay = 6; break;
+    }
+    return nDay;
+}
+
+var dateDiff = exports.dateDiff = function (dFirst, dSecond) {        
+    return Math.round((dSecond - dFirst) / (1000 * 60 * 60 * 24));
+}
+
+var addDays = exports.addDays = function (dDate, nDeltaDays) {
+    var result = new Date(dDate);
+    result.setDate(result.getDate() + nDeltaDays);
+    return result;
+}
+
+var convertDateToUTC = exports.convertDateToUTC = function (dDate) {
+    return new Date(
+        dDate.getUTCFullYear(),
+        dDate.getUTCMonth(),
+        dDate.getUTCDate(),
+        dDate.getUTCHours(),
+        dDate.getUTCMinutes(),
+        dDate.getUTCSeconds());
+}
+
+var calcUpcomingDailyData = exports.calcUpcomingDailyData = function() {
+    var dNow = new Date(Date.now());
+    // Test
+    //dNow = new Date(Date.now() + (1000*60*60*(7+0*24)));
+    var nCurrentDay = dNow.getUTCDay();
+    console.log("dNow: " + dNow);
+    //console.log("nCurrentDay: " + nCurrentDay);
+
+    //const nDaysSinceStartOfSpotlight = dateDiff(SpotlightStartDate, dNow);
+    //console.log("nDaysSinceStartOfSpotlight: " + nDaysSinceStartOfSpotlight);
+
+    const nTimeSinceStartOfSpotlight = dNow - SpotlightStartDate;
+    console.log("nTimeSinceStartOfSpotlight: " + nTimeSinceStartOfSpotlight);
+
+    var sSoonestDailyKey = null, nSoonestDailyDeltaTime;
+    var dTestDate, nDeltaDays, nDeltaTime;
+    /*for (let key in DailyDayDictionary) {
+        nDeltaDays = (DailyDayDictionary[key].day < nCurrentDay) ? (7 - nCurrentDay) + DailyDayDictionary[key].day : DailyDayDictionary[key].day - nCurrentDay;
+        dTestDate = addDays(dNow, nDeltaDays);
+        dTestDate.setUTCHours(DailyDayDictionary[key].hour);
+        dTestDate.setUTCMinutes(0);
+        dTestDate.setUTCSeconds(0);
+        nDeltaTime = dTestDate - dNow;
+
+        let bIsDeltaTimePositive = (nDeltaTime > 0);
+        if (!bIsDeltaTimePositive) continue;
+
+        if (!sSoonestDailyKey || (nSoonestDailyDeltaTime > nDeltaTime)) {
+            sSoonestDailyKey = key;
+            nSoonestDailyDeltaTime = nDeltaTime;
+        }
+    }*/
+    for (let key in DailyCycleDictionary) {
+        dTestDate = addDays(SpotlightStartDate, DailyCycleDictionary[key].day);
+        dTestDate.setUTCHours(DailyCycleDictionary[key].hour);
+        dTestDate.setUTCMinutes(0);
+        dTestDate.setUTCSeconds(0);
+        nDeltaTime = dTestDate - dNow;
+
+        let bIsDeltaTimePositive = (nDeltaTime > 0);
+        if (!bIsDeltaTimePositive) continue;
+
+        if (!sSoonestDailyKey || (nSoonestDailyDeltaTime > nDeltaTime)) {
+            sSoonestDailyKey = key;
+            nSoonestDailyDeltaTime = nDeltaTime;
+
+            console.log("Test sSoonestDailyKey: " + sSoonestDailyKey);
+            console.log("Test nSoonestDailyDeltaTime: " + nSoonestDailyDeltaTime);
+        }
+    }
+
+    if (!sSoonestDailyKey) return null;
+
+    console.log("sSoonestDailyKey: " + sSoonestDailyKey);
+    var nSeconds = Math.floor(nSoonestDailyDeltaTime/1000);
+    var nMinutes = Math.floor(nSeconds/60);
+    var nHours = Math.floor(nMinutes/60);
+    var nDays = Math.floor(nHours/24);
+    console.log("nSeconds: " + nSeconds);
+    console.log("nMinutes: " + nMinutes);
+    console.log("nHours: " + nHours);
+    console.log("nDays: " + nDays);
+
+    //nHours = nHours-(nDays*24);
+    nMinutes = nMinutes/*-(nDays*24*60)*/-(nHours*60);
+
+    return {
+        soonestDailyKey: sSoonestDailyKey,
+        hoursLeft: nHours,
+        minutesLeft: nMinutes,
+    };
+}
+
+//#endregion Daily Content
