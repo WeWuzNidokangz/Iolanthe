@@ -76,9 +76,9 @@ const TourInlineNameSeparator = ',,,';
 
 const GenericResourcesLink = exports.GenericResourcesLink = 'https://www.smogon.com/forums/threads/om-mashup-megathread.3657159/#post-8299984';
 const MashupsGeneratedFormatsColumn = 1;
+const DailyNotificationBeginWarningFromRemainingMinutes = 20;
 const DailyNotificationCheckFrequencyMinutes = 10;
-// - 1000 to ensure check frequency is smaller than minimum display frequency
-const DailyNotificationCheckFrequencyMilliseconds = (1000 * 60 * DailyNotificationCheckFrequencyMinutes) - 1000;
+const DailyNotificationCheckFrequencyMilliseconds = (1000 * 60 * DailyNotificationCheckFrequencyMinutes);
 
 var OfficialTourCodesNamesArray = exports.OfficialTourCodesNamesArray = [];
 var OtherTourCodesNamesArray = exports.OtherTourCodesNamesArray = [];
@@ -682,7 +682,7 @@ var tourCodeCacheSecondPhaseInit = function(room)
         if (!upcomingDailyData) return;
 
         if (upcomingDailyData.hoursLeft > 0) return;
-        if (upcomingDailyData.minutesLeft > DailyNotificationCheckFrequencyMinutes) return;
+        if (upcomingDailyData.minutesLeft > DailyNotificationBeginWarningFromRemainingMinutes) return;
 
         //console.log(CommandParser.cachedRoom);
 
