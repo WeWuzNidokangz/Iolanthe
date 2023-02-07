@@ -853,21 +853,23 @@ var requestWriteTourCode = exports.requestWriteTourCode = function (
     commandContext,
     arg,
     user,
-    room)
+    room,
+    bHasDirectWriteAccess)
 {
     if (bIsDoingRefresh) {
         commandContext.reply(`Already waiting on update!`);
         return;
     }
 
-    requestWriteTourCodeAsync(commandContext, arg, user, room);
+    requestWriteTourCodeAsync(commandContext, arg, user, room, bHasDirectWriteAccess);
 }
 
 var requestWriteTourCodeAsync = async function (
     commandContext,
     arg,
     user,
-    room)
+    room,
+    bHasDirectWriteAccess)
 {
     if (bIsDoingRefresh) return;
 
@@ -933,20 +935,23 @@ var requestWriteTourCodeAsync = async function (
         }
     }
 
-    if (!bTCValid) {
+    // Revert local overwrite
+    if (!bHasDirectWriteAccess || !bTCValid) {
         if (bIsExistingTour) {
             AllTourCodesDictionary[sKey] = sBackupExistingTC;
         } else {
             delete AllTourCodesDictionary[sKey];
         }
+    }
 
+    if (!bTCValid) {
         bIsDoingRefresh = false;
 
         return;
     }
 
     // Confirm local overwrite
-    if (!INIT_FROM_CACHE) {
+    if (!INIT_FROM_CACHE && bHasDirectWriteAccess) {
         DynamicFormatsRawDictionary[sKey] = dynamicFormatRaw;
     }
 
@@ -956,7 +961,15 @@ var requestWriteTourCodeAsync = async function (
 
     var bPRRequestSucceeded = true;
     try {
-        await writeTourCodeCreatePRAsync(commandContext, sKey, bIsExistingTour, sTourCode, sComment, user, room);
+        await writeTourCodeCreatePRAsync(
+            commandContext,
+            sKey,
+            bIsExistingTour,
+            sTourCode,
+            sComment,
+            user,
+            room,
+            bHasDirectWriteAccess);
     } catch (err) {
         commandContext.reply(`Failed update: ${err}`);
         bPRRequestSucceeded = false;
@@ -980,7 +993,8 @@ var writeTourCodeCreatePRAsync = async function (
     sTourCode,
     sComment,
     user,
-    room)
+    room,
+    bHasDirectWriteAccess)
 {
     const sUserId = toId(user);
 
@@ -999,8 +1013,10 @@ var writeTourCodeCreatePRAsync = async function (
         changedFilesDict[`metadata/list.txt`] = allTourCodesKeyArray.join('\n');
     }
 
+    const sOverwriteStatus = bHasDirectWriteAccess ? `Overwrote local tour code` : `Local tour code unchanged`;
+
     if (TEST_OCTOKIT_NO_PR) {
-        Bot.say(room, `!code Skipped creating PR at : https://github.com/OperationTourCode/${sRepo}/pull/(Number)
+        Bot.say(room, `!code Skipped creating PR at : https://github.com/OperationTourCode/${sRepo}/pull/(Number) (${sOverwriteStatus})
 
 Comment: ${sComment}
 
@@ -1033,7 +1049,7 @@ List: ${bIsExistingTour ? '(Unchanged)' : changedFilesDict[`metadata/list.txt`]}
     })
     .then((pr) => {
         console.log(pr.data.number);
-        commandContext.reply(`Created PR: https://github.com/OperationTourCode/${sRepo}/pull/${pr.data.number}`);
+        commandContext.reply(`Created PR: https://github.com/OperationTourCode/${sRepo}/pull/${pr.data.number} (${sOverwriteStatus})`);
     })
     .catch((err) => {
         commandContext.reply(`Failed update: ${err}`);

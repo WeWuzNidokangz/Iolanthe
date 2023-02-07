@@ -97,9 +97,10 @@ exports.commands = {
     },
     write: 'writetour',
     writetour: function (arg, user, room, cmd) {
-        if (!this.isRanked(Tools.getGroup('moderator'))) return false;
+        if (!this.isRanked(Tools.getGroup('driver'))) return false;
 
-        TourCodeManager.requestWriteTourCode(this, arg, user, room);
+        const bHasDirectWriteAccess = this.isRanked(Tools.getGroup('moderator'));
+        TourCodeManager.requestWriteTourCode(this, arg, user, room, bHasDirectWriteAccess);
     },
     randtour: 'randomtour',
     randomtour: function (arg, user, room, cmd) {
