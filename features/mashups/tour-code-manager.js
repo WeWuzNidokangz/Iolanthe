@@ -1030,11 +1030,13 @@ List: ${bIsExistingTour ? '(Unchanged)' : changedFilesDict[`metadata/list.txt`]}
 
     //console.log(`Trying to create PR at https://github.com/OperationTourCode/${sRepo}/`);
 
+    const sIdentifiedComment = `(${user}) ${sKey}: ${sComment}`;
+
     octokit
     .createPullRequest({
         owner: `OperationTourCode`,
         repo: sRepo,
-        title: `(${user}) ${sKey}: ${sComment}`,
+        title: sIdentifiedComment,
         body: `${user}: "${sComment}"\n\nCreated via Iolanthe on ${dNow.toUTCString()}.`,
         base: sBaseBranchName, /* optional: defaults to default branch */
         head: sHeadBranchName,
@@ -1043,7 +1045,7 @@ List: ${bIsExistingTour ? '(Unchanged)' : changedFilesDict[`metadata/list.txt`]}
             {
                 /* optional: if `files` is not passed, an empty commit is created instead */
                 files: changedFilesDict,
-                commit: sComment,
+                commit: sIdentifiedComment,
             },
         ],
     })
