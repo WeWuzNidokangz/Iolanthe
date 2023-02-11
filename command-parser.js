@@ -303,9 +303,19 @@ var parse = exports.parse = function (room, by, msg) {
 			msg = msg.replace('/raw <div class="infobox"><details class="readmore code" style="white-space: pre-wrap; display: table; tab-size: 3">', '');
 			msg = msg.replace('<summary>', '');
 			msg = msg.replace('</summary>', '\n');
+
+			// HTML special character escapes
+			msg = msg.replace(/&quot;/g, '"');
+			msg = msg.replace(/&amp;/g, '&');
+			msg = msg.replace(/&lt;/g, '<');
+			msg = msg.replace(/&gt;/g, '>');
+
+			// Other problem character escapes
 			msg = msg.replace(/<wbr \/>/g, '');
 			msg = msg.replace(/&#x2f;/g, '/');
+			msg = msg.replace(/&apos;/g, "'");
 			msg = msg.replace(/<br \/>/g, '\n');
+
 			msg = msg.replace('</details></div>', '');
 		}
 	}
