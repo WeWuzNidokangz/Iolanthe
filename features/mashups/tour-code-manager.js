@@ -883,7 +883,7 @@ var requestWriteTourCodeAsync = async function (
         return;
     }
 
-    const sSearchKey = toId(params[0]);
+    const sSearchKey = toId(params[0].trim());
     var sKey = searchValidDynamicFormatKey(sSearchKey);
     const bIsExistingTour = !!sKey;
     if (!bIsExistingTour) {
@@ -897,7 +897,7 @@ var requestWriteTourCodeAsync = async function (
         return;
     }
 
-    const sTourCode = params[2];
+    const sTourCode = params[2].trim();
     if ('' === sTourCode) {
         bIsDoingRefresh = false;
         commandContext.reply(`Tour code cannot be empty!`);
