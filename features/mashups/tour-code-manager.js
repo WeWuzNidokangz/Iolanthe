@@ -1009,8 +1009,11 @@ var writeTourCodeCreatePRAsync = async function (
     const changedFilesDict = {};
     changedFilesDict[sTourCodePath] = sTourCode;
     if (!bIsExistingTour) {
-        const allTourCodesKeyArray = Object.keys(AllTourCodesDictionary).sort();
-        changedFilesDict[`metadata/list.txt`] = allTourCodesKeyArray.join('\n');
+        const allTourCodesKeyArray = Object.keys(AllTourCodesDictionary);
+        if (!bHasDirectWriteAccess) { // Without write access, the key should have been deleted locally
+            allTourCodesKeyArray.push(sKey);
+        }
+        changedFilesDict[`metadata/list.txt`] = allTourCodesKeyArray.sort().join('\n');
     }
 
     const sOverwriteStatus = bHasDirectWriteAccess ? `Overwrote local tour code` : `Local tour code unchanged`;
