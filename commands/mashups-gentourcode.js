@@ -685,9 +685,11 @@ exports.commands = {
 		// Put all involved metas into an array for robust accessing
 		var sMetaArray = [params.baseFormat];
 		var metaDetailsArray = [baseFormatDetails];
-		for ( nAddOn = 0; nAddOn < params.addOnFormats.length; ++nAddOn) {
-			sMetaArray[nAddOn+1] = params.addOnFormats[nAddOn];
-			metaDetailsArray[nAddOn+1] = Mashups.findFormatOrRulesetAsFormatDetails(params.addOnFormats[nAddOn]);
+		if (params.addOnFormats) {
+			for (nAddOn = 0; nAddOn < params.addOnFormats.length; ++nAddOn) {
+				sMetaArray[nAddOn+1] = params.addOnFormats[nAddOn];
+				metaDetailsArray[nAddOn+1] = Mashups.findFormatOrRulesetAsFormatDetails(params.addOnFormats[nAddOn]);
+			}
 		}
 
 		// Determine tier
