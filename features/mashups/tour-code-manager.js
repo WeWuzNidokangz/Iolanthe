@@ -7,6 +7,10 @@ const fs = require('fs');
 const Mashups = exports.Mashups = require('./index.js');
 const DataDownloader = exports.DataDownloader = require('./../../data-downloader.js');
 
+//#region TrickMode
+var Tournaments = exports.Tournaments = require('./../tournaments/index.js');
+//#endregion TrickMode
+
 const allSettled = require('promise.allsettled');
 
 // Needs: npm install @octokit/core octokit-plugin-create-pull-request
@@ -1404,7 +1408,48 @@ var searchTourCode = exports.searchTourCode = function (sSearch)
     sSearch = searchValidDynamicFormatKey(sSearch);
     if (!sSearch) return null;
 
-    return AllTourCodesDictionary[sSearch];
+    var sTourCode = AllTourCodesDictionary[sSearch];
+
+    if (Tournaments.getTrickMode()) {
+        const sAddedRule = 'Flipped Mod';
+        const sAddedRuleId = toId(sAddedRule);
+
+        let lineArray = sTourCode.split('\n');
+        let filteredLineArray = [];
+        let bFoundRulesLine = false;
+        lineArray.forEach(function(sLine) {
+            if(!sLine) return;
+            sLine = sLine.replace(/ +(?= )/g,''); // Ensure the line of text is single-spaced
+            if(sLine.startsWith(TourDeltaRulesLinePrefix)) {
+                sLine = sLine.replace(TourDeltaRulesLinePrefix, '');
+                let ruleArray = sLine.split(',');
+                let filteredRuleArray = [];
+                let bAddedRuleExists = false;
+                ruleArray.forEach(function(sRule) {
+                    const sRuleId = toId(sRule);
+                    if (sRuleId === sAddedRuleId) {
+                        if (sRule.includes('!')) return;
+
+                        bAddedRuleExists = true;
+                    }
+
+                    filteredRuleArray.push(sRule.trim());
+                });
+                if (!bAddedRuleExists) {
+                    filteredRuleArray.splice((filteredRuleArray.length + 1) * Math.random(), 0, sAddedRule);
+                }
+                sLine = TourDeltaRulesLinePrefix + filteredRuleArray.join(', ');
+                bFoundRulesLine = true;
+            }
+            filteredLineArray.push(sLine);
+        });
+        if (!bFoundRulesLine) { // Add a rules line if it didn't exist
+            filteredLineArray.push(TourDeltaRulesLinePrefix + sAddedRule);
+        }
+        sTourCode = filteredLineArray.join('\n');
+    }
+
+    return sTourCode;
 }
 
 var searchDynamicFormatRaw = exports.searchDynamicFormatRaw = function (sSearch)
