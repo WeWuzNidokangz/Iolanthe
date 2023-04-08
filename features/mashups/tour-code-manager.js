@@ -638,12 +638,20 @@ var tourCodeCacheSecondPhaseInit = function(room)
     DailyCycleDictionary = {};
     nDayReferenceIdx = 0;
     var nOffsetDayReferenceIdx = 0;
-    for (var nCycleItr=0; nCycleItr<4; ++nCycleItr) {
+    for (var nCycleItr = 0; nCycleItr < 4; ++nCycleItr) {
         for (const sDayKey in DailyDayDictionary) {
+            //console.log("nCycleItr: " + nCycleItr);
+            //console.log("sDayKey: " + sDayKey);
+            //console.log("nDayReferenceIdx: " + nDayReferenceIdx);
             nOffsetDayReferenceIdx = nDayReferenceIdx + nCycleItr;
             if (nOffsetDayReferenceIdx >= 7) {
                 nOffsetDayReferenceIdx -= 7;
+
+                if (nCycleItr > 0) {
+                    nOffsetDayReferenceIdx++;
+                }
             }
+            //console.log("nOffsetDayReferenceIdx: " + nOffsetDayReferenceIdx);
             const timeReference = dayReferenceArray[nOffsetDayReferenceIdx];
             //console.log(timeReference);
             const sCycleKey = `${sDayKey} ${nCycleItr}`;
@@ -652,6 +660,8 @@ var tourCodeCacheSecondPhaseInit = function(room)
                 hour: timeReference.hour,
                 formatgroup: DailyDayDictionary[sDayKey].formatgroup
             };
+            //console.log("sCycleKey: " + sCycleKey);
+            //console.log(DailyCycleDictionary[sCycleKey]);
 
             nDayReferenceIdx++;
         }
@@ -2384,6 +2394,7 @@ var calcUpcomingDailyData = exports.calcUpcomingDailyData = function() {
             nSoonestDailyDeltaTime = nDeltaTime;
         }
     }*/
+    console.log(DailyCycleDictionary);
     for (let key in DailyCycleDictionary) {
         dTestDate = addDays(SpotlightStartDate, DailyCycleDictionary[key].day);
         dTestDate.setUTCHours(DailyCycleDictionary[key].hour);
