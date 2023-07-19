@@ -1227,6 +1227,7 @@ const DirectFormatIDAliasDict = Object.freeze(sortByKeyLength({
     'doubles':  [],
     'flipped':  [],
     'forte':    ['fortemons'],
+    'fotf':     ['forceofthefallen'],
     'fp':       ['fullpotential'],
     'gg':       ['godlygift'],
     'inh':      ['inheritance'],
