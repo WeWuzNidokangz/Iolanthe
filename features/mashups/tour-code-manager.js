@@ -194,7 +194,7 @@ var tryGetRandomTourCodeForCategory = exports.tryGetRandomTourCodeForCategory = 
     //console.log(`sTourCodeName: ${sTourCodeName}`);
 
     if (!sTourCodeName) {
-        commandContext.reply(`Failed to retrive a valid tour code name for category: ${sCategoryName}!`);
+        commandContext.reply(`Failed to retrieve a valid tour code name for category: ${sCategoryName}!`);
         return null;
     }
 
@@ -850,8 +850,8 @@ var refreshSingleFormatCache = exports.refreshSingleFormatCache = async function
 const TEST_OCTOKIT_NO_PR = false;
 //const TEST_OCTOKIT_NO_PR = true;
 
-const TEST_OCTOKIT_SIDE_BRANCH = false;
-//const TEST_OCTOKIT_SIDE_BRANCH = true;
+const TEST_OCTOKIT_SANDBOX_REPOSITORY = false;
+//const TEST_OCTOKIT_SANDBOX_REPOSITORY = true;
 
 const MyOctokit = Octokit.plugin(createPullRequest);
 
@@ -1011,8 +1011,8 @@ var writeTourCodeCreatePRAsync = async function (
     const nNowTimestamp = Date.now();
     const dNow = new Date(nNowTimestamp);
 
-    const sRepo = `OperationTourCode`; // Seems like it needs to use this instead of 'OTC' for now
-    const sBaseBranchName = TEST_OCTOKIT_SIDE_BRANCH ? `reorganize-structure` : `master`;
+    const sRepo =  TEST_OCTOKIT_SANDBOX_REPOSITORY ? `OTC_SandboxMirror` : `OperationTourCode`; // Seems like it needs to use this instead of 'OTC' for now
+    const sBaseBranchName = `master`;
     const sHeadBranchName = `${sUserId}-${sKey}-${nNowTimestamp}`;
     const sTourCodePath = `formats/${sKey}${TourExt}`;
 
