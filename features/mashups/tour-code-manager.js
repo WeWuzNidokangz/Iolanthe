@@ -1045,12 +1045,16 @@ List: ${bIsExistingTour ? '(Unchanged)' : changedFilesDict[`metadata/list.txt`]}
 
     const sIdentifiedComment = `(${user}) ${sKey}: ${sComment}`;
 
+    // Escape @ in user rank so that GitHub doesn't consider it a link to a GH account name
+    // \ doesn't work: https://github.com/github/markup/issues/1168
+    const sSanitizedUsername = user.replace(`@`, `@<!-- -->`);
+
     octokit
     .createPullRequest({
         owner: `OperationTourCode`,
         repo: sRepo,
         title: sIdentifiedComment,
-        body: `${user}: "${sComment}"\n\nCreated via Iolanthe on ${dNow.toUTCString()}.`,
+        body: `${sSanitizedUsername}: "${sComment}"\n\nCreated via Iolanthe on ${dNow.toUTCString()}.`,
         base: sBaseBranchName, /* optional: defaults to default branch */
         head: sHeadBranchName,
         forceFork: true, /* optional: force creating fork even when user has write rights */
