@@ -174,7 +174,7 @@ function step1 () {
 	};
 	print("");
 	if (o === 1) {
-		var host = "sim.psim.us", port = 8000, id = "showdown";
+		var host = "sim3.psim.us", port = false, id = "showdown";
 		print("Server: " + host + ", Port: " + port + ", Id: " + id);
 		var r;
 		do {

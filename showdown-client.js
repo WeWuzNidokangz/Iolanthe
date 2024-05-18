@@ -48,7 +48,7 @@ var Client = (function () {
 			port: port,
 			secprotocols: [],
 			connectionTimeout: 2 * 60 * 1000,
-			loginServer: 'https://play.pokemonshowdown.com/~~showdown/action.php',
+			loginServer: 'https://play.pokemonshowdown.com/action.php',
 			nickName: null,
 			pass: null,
 			retryLogin: 10 * 1000,
@@ -168,7 +168,8 @@ var Client = (function () {
 		for (var i = 0, l = chars.length; i < 8; i++) {
 			str += chars.charAt(~~(Math.random() * l));
 		}
-		var conStr = 'ws://' + self.opts.server + ':' + self.opts.port + '/showdown/' + id + '/' + str + '/websocket';
+		var port = !!self.opts.port ? ':' + self.opts.port : '';
+		var conStr = 'wss://' + self.opts.server + port + '/showdown/' + id + '/' + str + '/websocket';
 		self.debug('connecting to ' + conStr + ' - secondary protocols: ' + sys.inspect(self.opts.secprotocols));
 		webSocket.connect(conStr, self.opts.secprotocols);
 	};

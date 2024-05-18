@@ -260,7 +260,7 @@ var opts = {
 	serverid: Config.serverid,
 	secprotocols: [],
 	connectionTimeout: Config.connectionTimeout,
-	loginServer: 'https://play.pokemonshowdown.com/~~' + Config.serverid + '/action.php',
+	loginServer: 'https://play.pokemonshowdown.com/action.php',
 	nickName: null,
 	pass: null,
 	retryLogin: false,
