@@ -237,7 +237,7 @@ var tryTourCodeSearch = exports.tryTourCodeSearch = function (commandContext, sS
         // Unions
         unionResults = [];
         for(nUnionItr=0; nUnionItr<unionsArray.length; ++nUnionItr) {
-            unionResults = unionResults.concat(trySearchTourCodeElement(commandContext, unionsArray[nUnionItr], unionResults, intersectionsArray));
+            unionResults = unionResults.concat(trySearchTourCodeElement(unionsArray[nUnionItr], unionResults, intersectionsArray));
         }
 
         // Intersections
@@ -256,7 +256,7 @@ var tryTourCodeSearch = exports.tryTourCodeSearch = function (commandContext, sS
 
 const RandomSearchKeywordsArray = ['random', 'randoms'];
 
-var trySearchTourCodeElement = function (commandContext, sSearch, unneededArray, ignoredArray)
+var trySearchTourCodeElement = function (sSearch, unneededArray, ignoredArray)
 {
     sSearch = sSearch.replace(/^\s+|\s+$/g, '');
     var bSearchIsRevoke = (sSearch && ('!' === sSearch[0]));

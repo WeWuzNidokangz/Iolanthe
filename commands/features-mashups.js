@@ -81,9 +81,17 @@ exports.commands = {
         if (!this.isRanked(Tools.getGroup('driver'))) return false;
 
         const validFormatKey = TourCodeManager.replyToSearchValidDynamicFormatKey(this, arg);
-        if(!validFormatKey) return;
+        if (!validFormatKey) return;
+        
+        var output = TourCodeManager.searchTourCode(validFormatKey);
+        
+        // Try to add scrappie leaderboard trigger for non-random tours
+        var randomFormatTourKeyArray = TourCodeManager.trySearchTourCodeElement('random');
+        if (randomFormatTourKeyArray && !randomFormatTourKeyArray.includes(validFormatKey)) {
+            output += '\n' + '.official';
+        }
 
-        this.reply(TourCodeManager.searchTourCode(validFormatKey));
+        this.reply(output);
     },
     preview: 'previewtour',
 	previewtour: function (arg, user, room, cmd) {
